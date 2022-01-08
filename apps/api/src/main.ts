@@ -1,22 +1,51 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
-import { Logger } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { join } from 'path';
 
 import { AppModule } from './app/app.module';
+import { environment } from './environments/environment';
+
+declare const module: any;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const globalPrefix = 'api';
-  app.setGlobalPrefix(globalPrefix);
-  const port = process.env.PORT || 3333;
-  await app.listen(port);
-  Logger.log(
-    `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`
+  const adapter = new FastifyAdapter({ bodyLimit: 2560000000 }); //256m
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  adapter.register(require('fastify-multipart'));
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    adapter
   );
-}
+  app.enableCors();
+  const appName = 'MWX';
+  const appVersion = '1.0';
+  const builder = new DocumentBuilder()
+    .setTitle(appName)
+    .addBearerAuth()
+    .setVersion(appVersion);
+  if (environment.appUrl) {
+    builder.addServer(environment.appUrl);
+  }
+  const options = builder.build();
 
+  const document = SwaggerModule.createDocument(app, options);
+  SwaggerModule.setup('docs', app, document);
+
+  app.useGlobalPipes(new ValidationPipe());
+  app.useStaticAssets({
+    root: join(__dirname, 'public'),
+    prefix: '/public/',
+  });
+  const port = process.env.PORT || 3333;
+  await app.listen(port, '0.0.0.0');
+
+  if (module.hot) {
+    module.hot.accept();
+    module.hot.dispose(() => app.close());
+  }
+}
 bootstrap();

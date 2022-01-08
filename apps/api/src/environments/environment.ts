@@ -1,3 +1,15 @@
 export const environment = {
-  production: false,
+  production: true,
+  appUrl: 'http://localhost:3333',
+  appKey: 'secret',
+  jwtTtl: '3600000000',
+  appEnv: 'local',
+  dbLog: true,
+  migrationsRun: true,
+  dbConnection: 'mysql',
+  dbHost: 'localhost',
+  dbPort: '3306',
+  dbName: 'blog',
+  dbUser: 'mwx',
+  dbPass: '0111mvtT',
 };

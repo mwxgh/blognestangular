@@ -1,9 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { Message } from '@blog/api-interfaces';
+import { Connection } from 'typeorm';
 
 @Injectable()
 export class AppService {
-  getData(): Message {
+  constructor(private connection: Connection) {}
+  getData(): { message: string } {
     return { message: 'Welcome to api!' };
+  }
+
+  isJson(str) {
+    try {
+      JSON.parse(str);
+    } catch (e) {
+      return false;
+    }
+    return true;
   }
 }
